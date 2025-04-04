@@ -1,24 +1,31 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      "@src": path.resolve(__dirname, "src"),
-    },
-  },
-  server: {
-    proxy: {
-      "/api": { // ✅ Все запросы, начинающиеся с "/api" будут проксироваться
-        target: process.env.VITE_API_URL || "http://localhost:8000/v1",
-        changeOrigin: true, // ✅ Меняет заголовок Origin на целевой сервер
-        secure: false, // ✅ Используется, если сервер HTTPS с self-signed SSL
-        rewrite: (path) => path.replace(/^\/api/, ""), // ✅ Убирает "/api" перед отправкой
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+
+  return {
+    plugins: [react()],
+    resolve: {
+      alias: {
+        "@src": path.resolve(__dirname, "src"),
       },
     },
-  },
-  base: "/lineup-ui/", // Добавляем базовый путь, соответствующий названию репозитория
+    base: "./", // лучше для HashRouter, особенно в проде
+    server: {
+      proxy: {
+        "/api": {
+          target: env.VITE_API_URL || "http://localhost:8000/v1",
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api/, ""),
+        },
+      },
+    },
+    define: {
+      "process.env.VITE_API_URL": JSON.stringify(env.VITE_API_URL),
+      "process.env.VITE_PRIVY_APP_ID": JSON.stringify(env.VITE_PRIVY_APP_ID),
+    },
+  };
 });
