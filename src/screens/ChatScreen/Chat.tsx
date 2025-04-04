@@ -1,19 +1,14 @@
 import styled from "@emotion/styled";
-import React, { useState,useRef, useEffect } from "react";
-import Button from "../../components/Button";
-import { Row } from "../../components/Flex";
-import Divider from "../../components/Divider";
-import Message from "./Message";
-import dayjs from "dayjs";
-import { sendRequest } from "../../utils/request";  
-import { useChatStore } from "../../store/chatStore"; 
-import ConnectWallet from "../../components/IsConnectedWallet";
-import logo from "@src/assets/icons/logo.svg";
 import { usePrivy } from "@privy-io/react-auth";
-import centerEllipsis from "../../utils/centerEllipsis";
-import * as identityImg from "identity-img";
+import { observer } from "mobx-react-lite";
+import React, { useEffect, useRef, useState } from "react";
+import Button from "../../components/Button";
+import Divider from "../../components/Divider";
+import { Row } from "../../components/Flex";
+import ConnectWallet from "../../components/IsConnectedWallet";
 import Loading from "../../components/Loading";
-
+import { useStores } from "../../stores";
+import Message from "./Message";
 
 const Root = styled.div`
   display: flex;
@@ -36,7 +31,7 @@ const InputPanel = styled.div`
   align-items: center;
   box-sizing: border-box;
   padding: 16px;
-  background-color: #1F1E25;
+  background-color: #1f1e25;
   border-radius: 16px;
 `;
 
@@ -45,8 +40,8 @@ const TextArea = styled.textarea`
   min-height: 48px;
   padding: 12px;
   box-sizing: border-box;
-  background: #1F1E25;
-  border: 1px solid #1F1E25;
+  background: #1f1e25;
+  border: 1px solid #1f1e25;
   border-radius: 8px;
   color: white;
   font-family: "Inter", sans-serif;
@@ -56,7 +51,7 @@ const TextArea = styled.textarea`
   outline: none;
 
   &::placeholder {
-    color: #A2A2C0;
+    color: #a2a2c0;
   }
 `;
 
@@ -66,68 +61,40 @@ const MessagesPanel = styled.div`
   width: 100%;
   flex: 2;
   margin-bottom: 16px;
-  max-height: calc(100vh - 420px);
+  max-height: calc(100vh - 450px);
   overflow-y: auto;
 `;
 
-const Chat: React.FC = () => {
+const Chat: React.FC = observer(() => {
   const { user } = usePrivy();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const { messages, addMessage } = useChatStore();
   const [isLoading, setIsLoading] = useState(false);
-
+  const { chatStore } = useStores();
+  const { messages } = chatStore;
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages.length]);
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || !user?.wallet?.address) return;
     setIsLoading(true);
-    try{
-      const userMessage = {
-        address: centerEllipsis(user?.wallet?.address || "***************", 8),
-        timestamp: dayjs().format("HH:mm"),
-        message: input,
-        isRight: true,
-        hasBackground: true,
-        icon: identityImg.create(user?.wallet?.address || "***************", { size: 24 * 3 })
-      };
-  
-      addMessage(userMessage)
-      setInput("");
-    
-      const response = await sendRequest(input)
-      // TODO change
-  
-      if (response[0].text) {
-        const botMessage = {
-          address: "Lineup AI",
-          timestamp: dayjs().format("HH:mm"),
-          message: response[0].text,
-          hasBackground: true,
-          isRight: false,
-          icon: logo
-        };
-  
-        // const botMessage = {
-        //   address: "Lineup AI",
-        //   timestamp: dayjs().format("HH:mm"),
-        //   message: praiseMessages[Math.floor(Math.random() * praiseMessages.length)],
-        //   hasBackground: true,
-        //   isRight: false
-        // };
-        addMessage(botMessage);
-      };
+    setInput("");
+    try {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      await chatStore.sendMessage(user.wallet.address, input);
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     } catch (error) {
       console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }
-    
+  };
+
+  for (const {message} of messages) {
+    console.log(message);
   }
 
-  
   return (
     <Root>
       <MessagesPanel>
@@ -137,22 +104,34 @@ const Chat: React.FC = () => {
         <div ref={messagesEndRef} />
       </MessagesPanel>
       <InputPanel>
-      <ConnectWallet>
-        <TextArea
-          placeholder="How can I help you?"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+        <ConnectWallet>
+          <TextArea
+            placeholder="How can I help you?"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
           />
-        <Divider style={{ margin: "16px 0" }} />
-        <Row alignItems="center" justifyContent="space-between">
-          <Row></Row>
-          {isLoading ? <Button style={{ width: "300px" }}  disabled><Loading /></Button> : <Button disabled={!input.trim()} style={{ width: "300px" }} onClick={sendMessage}>Send message</Button>}
-        </Row>
-          </ConnectWallet>
+          <Divider style={{ margin: "16px 0" }} />
+          <Row alignItems="center" justifyContent="space-between">
+            <Row></Row>
+            {isLoading ? (
+              <Button style={{ width: "300px" }} disabled>
+                <Loading />
+              </Button>
+            ) : (
+              <Button
+                disabled={!input.trim()}
+                style={{ width: "300px" }}
+                onClick={sendMessage}
+              >
+                Send message
+              </Button>
+            )}
+          </Row>
+        </ConnectWallet>
       </InputPanel>
     </Root>
   );
-};
+});
 
 export default Chat;

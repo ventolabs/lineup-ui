@@ -31,7 +31,7 @@ const Root = styled(Column)`
 `;
 
 const WalletActionsTooltip: React.FC<IProps> = () => {
-    const {  user, logout } = usePrivy();
+  const { user, logout } = usePrivy();
 
   const address = user?.wallet?.address;
   const handleCopyAddress = () => {

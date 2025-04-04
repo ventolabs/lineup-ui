@@ -59,7 +59,7 @@ const TotalValue: React.FC<IProps> = () => {
       <Top>
         <Paragraph size="medium">Total Value Locked</Paragraph>
         <SizedBox height={8} />
-        <TvlTitle>$420</TvlTitle>
+        <TvlTitle>$0</TvlTitle>
       </Top>
       <SizedBox height={2} />
       <Bottom>

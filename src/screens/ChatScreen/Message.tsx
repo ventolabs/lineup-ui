@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import { Row } from "../../components/Flex";
-import Paragraph from "../../components/Paragraph";
+import ReactMarkdown from "react-markdown";
 import SizedBox from "../../components/SizedBox";
 
 const MessageRoot = styled.div<{ isRight?: boolean; hasBackground?: boolean }>`
@@ -12,16 +12,17 @@ const MessageRoot = styled.div<{ isRight?: boolean; hasBackground?: boolean }>`
   max-width: 80%;
   width: fit-content;
   box-sizing: border-box;
-  background-color: ${({ hasBackground }) => hasBackground ? "#1F1E25" : "transparent"};
+  background-color: ${({ hasBackground }) =>
+    hasBackground ? "#1F1E25" : "transparent"};
   border-radius: 16px;
-  align-self: ${({ isRight }) => isRight ? "flex-end" : "flex-start"};
+  align-self: ${({ isRight }) => (isRight ? "flex-end" : "flex-start")};
 `;
 
 const Avatar = styled.div`
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #666DE3;
+  background: #666de3;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -43,18 +44,23 @@ const Message: React.FC<IMessageProps> = ({
   message,
   isRight = false,
   hasBackground = true,
-  icon
+  icon,
 }) => {
   return (
     <MessageRoot isRight={isRight} hasBackground={hasBackground}>
       <Row alignItems="center">
-        <Avatar style={{ backgroundImage:icon? `url(${icon})` : "none" , border: "2px solid #666DE3"}} />
+        <Avatar
+          style={{
+            backgroundImage: icon ? `url(${icon})` : "none",
+            border: "2px solid #666DE3",
+          }}
+        />
         <SizedBox width={12} />
-        <Paragraph style={{ padding: 0 }} type="secondary">{address} | {timestamp}</Paragraph>
+        <ReactMarkdown>{`${address} | ${timestamp}`}</ReactMarkdown>
       </Row>
-      <Paragraph>{message}</Paragraph>
+      <ReactMarkdown>{message}</ReactMarkdown>
     </MessageRoot>
   );
-}
+};
 
 export default Message;
